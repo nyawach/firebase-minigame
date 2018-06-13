@@ -1,5 +1,8 @@
+import _ from 'lodash'
+
 import db from '../../../plugins/firebase'
-import { getRoomRef, getPlayersRef } from '../../../utils/refs';
+
+import { getStatusRef, getPlayersRef, getCurrentPlayerRef } from '../../../utils/refs';
 
 export const createPlayer = ({commit}) => {
   const playerId = `player${(Math.random() * 100000) | 0}`
@@ -11,28 +14,36 @@ export const createRoom = async ({state, commit}) => {
   const roomRef = await db.ref('game').push()
 
   const status = 'matching'
+
   await roomRef.set({
     players: {
-      [state.playerId]: true,
+      [state.playerId]: 0,
     },
     status,
   })
   const roomId = roomRef.key
 
   commit('setRoomId', roomId)
-  commit('setStatus', status)
 }
 
-export const joinRoom = async ({state, commit}, {playerId}) => {
-  const roomRef = await getRoomRef(state.roomId)
+export const joinRoom = async ({state, commit}) => {
+  const statusRef = await getStatusRef(state.roomId)
   const status = 'matched'
-  await roomRef.update({
-    status
-  })
   const playerRef = await getPlayersRef(state.roomId)
-  playerRef.update({
-    [state.playerId]: true,
-  })
 
-  commit('setStatus', status)
+  await statusRef.set(status)
+  await playerRef.update({
+    [state.playerId]: 0,
+  })
+}
+
+export const changeTurn = async ({state, commit}) => {
+  const playersRef = await getPlayersRef(state.roomId)
+  // 子要素をkeyのなかから違うプレイヤーのものを取る
+  playersRef.once('value', snapshot => {
+    const currentPlayerRef = getCurrentPlayerRef(state.roomId)
+    const players = snapshot.val()
+    const nextPlayer = _(players).keys().filter(player => player !== state.currentPlayer).value()[0]
+    currentPlayerRef.set(nextPlayer)
+  })
 }

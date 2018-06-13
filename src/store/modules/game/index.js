@@ -6,7 +6,6 @@ import * as mutations from './mutations'
 const query = qs.parse(window.location.search.slice(1))
 const roomId = query['room-id'] || null
 
-
 const state = {
   roomId,
   status: null,

@@ -7,3 +7,6 @@ export const setPlayerId = (state, playerId) => {
 export const setStatus = (state, status) => {
   state.status = status
 }
+export const setCurrentPlayer = (state, currentPlayer) => {
+  state.currentPlayer = currentPlayer
+}
